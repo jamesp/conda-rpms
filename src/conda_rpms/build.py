@@ -6,11 +6,14 @@ equivalent built RPMs in the build directory.
 import os
 import glob
 import subprocess
+import typing
+from pathlib import Path
 
+from .logger import log
 
-def name_version_release(spec_fh):
+def name_version_release(spec_fh: typing.Iterable[str]) -> typing.Dict[str, str]:
     """
-    Take the name, version and release number from the given filehandle pointing at a sepc file.
+    Take the name, version and release number from the given filehandle pointing at a spec file.
     """
     content = {}
     for line in spec_fh:
@@ -23,20 +26,26 @@ def name_version_release(spec_fh):
     return content
 
 
-def build_new(rpmbuild_dir, rpm_directory):
+def build_new(rpmbuild_dir: str, rpm_directory: str) -> None:
     """We rely on spec naming conventions to check that the build RPMs actually exist."""
-    specs_directory = os.path.join(rpmbuild_dir, 'SPECS')
-    sources_directory = os.path.join(rpmbuild_dir, 'SOURCES')
+    build_dir = Path(rpmbuild_dir).resolve()
+    specs_directory = build_dir / "SPECS"
     for spec in sorted(glob.glob(os.path.join(specs_directory, '*.spec'))):
-        spec_path = os.path.join(specs_directory, spec)
         rpm_name = spec[:-5]
-        with open(spec_path, 'r') as fh:
+        with open(spec, 'r') as fh:
             spec_info = name_version_release(fh)
         rpm_name = '{name}-{version}-{release}.x86_64.rpm'.format(**spec_info)
 
-        if not os.path.exists(os.path.join(rpm_directory, rpm_name)):
-            subprocess.check_call(['rpmbuild', '-bb', '--define', "_topdir {}".format(rpmbuild_dir),
-                                   spec_path, '--force'])
+        rpm = Path(rpm_directory) / "x86_64" / rpm_name
+        if not rpm.exists():
+            log.info(f"Building {spec} to {rpm}")
+            subprocess.check_call([
+                'rpmbuild', '-bb',
+                '--define', "_topdir {}".format(build_dir),
+                spec, '--force'
+            ])
+        else:
+            log.info(f"RPM {rpm} already exists, skipping.")
 
 
 if __name__ == '__main__':
