@@ -169,7 +169,7 @@ def create_installer(
     pkg = CondaPackage.from_url(f"python=={py_ver}")
     spec = write_installer_rpm_spec(pkg, outdir, install_prefix, rpm_namespace)
     tarball = make_package_tarball(pkg)
-    shutil.copy(install_script_path, outdir / "SOURCES")
+    shutil.copy(install_script_path, outdir / "SOURCES" / install_script_path.name)
     return PackageSpec(pkg, spec, tarball)
 
 
@@ -186,8 +186,10 @@ def environment_to_rpms(
     with open(lockfile, "r") as f:
         urls = read_conda_lockfile(f)
 
-    if not outdir.is_dir():
-        outdir.mkdir()
+    sourcedir = outdir / "SOURCES"
+    specdir = outdir / "SPECS"
+    for dir in (outdir, sourcedir, specdir):
+        dir.mkdir(exist_ok=True)
 
     log.info(f"Generating RPM environment from {lockfile}.")
     log.info(f"{len(urls)} packages to be rendered.")
@@ -196,8 +198,6 @@ def environment_to_rpms(
     pkgs = [CondaPackage.from_url(url) for url in urls]
 
     log.info("Rendering all package specs.")
-    specdir = outdir / "SPECS"
-    specdir.mkdir(exist_ok=True)
     specs: List[PackageSpec] = [create_rpm_spec(pkg, *config) for pkg in pkgs]
 
     log.info("Rendering installer")
@@ -205,10 +205,9 @@ def environment_to_rpms(
     specs.append(installer)
 
     log.info("Copying sources")
-    sourcedir = outdir / "SOURCES"
-    sourcedir.mkdir(exist_ok=True)
     for spec in specs:
-        shutil.copy(spec.tarball, sourcedir)
+        log.info("Coping %s to %s", spec.tarball, sourcedir / spec.tarball.name)
+        shutil.copy(spec.tarball, sourcedir / spec.tarball.name)
 
     environment = CondaEnvironment(args.name, "1.0", None)
     write_environment_rpm_spec(environment, pkgs, outdir, install_prefix, rpm_namespace)
@@ -223,8 +222,6 @@ def create_rpm_spec(pkg, outdir, install_prefix, rpm_namespace):
 if __name__ == "__main__":
     import argparse
     from textwrap import dedent
-
-    from tqdm.contrib.logging import logging_redirect_tqdm
 
     parser = argparse.ArgumentParser()
     parser.add_argument(

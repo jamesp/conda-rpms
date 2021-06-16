@@ -1,6 +1,7 @@
 *.py[co]
 
 rpmbuild/
+_version.py
 
 # Packages
 *.egg
