@@ -19,8 +19,10 @@ with something like the example below.
 Assuming you have a [conda-lock](https://github.com/conda-incubator/conda-lock)
 named `~/data_science.lock`:
 ```
-python -m conda_rpms.generate --name data_science --output rpmbuild ~/data_science.lock
-rpmbuild -bb --define "_topdir $(pwd)/rpmbuild"  rpmbuild/SPECS/*.
+# create the specs and copy source files to ./dist/SPECS and ./dist/SOURCES
+python -m conda_rpms.generate --name data_science --output dist ~/data_science.lock
+# build the RPMs to ./dist/RPMS
+rpmbuild -bb --define "_topdir $(pwd)/dist"  dist/SPECS/*.
 spec
 ```
 
