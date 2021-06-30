@@ -44,3 +44,9 @@ RPM name format: ``<RPM namespace>-env-<env name>``
 
 A environment RPM represents a resolved conda environment.
 It depends on all Package RPMs that should be installed in order to produce a working environment. The environment RPM knows its target installation prefix, and uses conda functionality at install time to link the Package RPMs to the desired installation prefix.
+
+
+Testing
+=======
+
+```pytest cov=conda_rpms tests/```
