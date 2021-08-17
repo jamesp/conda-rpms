@@ -22,8 +22,7 @@ named `~/data_science.lock`:
 # create the specs and copy source files to ./dist/SPECS and ./dist/SOURCES
 python -m conda_rpms.generate --name data_science --output dist ~/data_science.lock
 # build the RPMs to ./dist/RPMS
-rpmbuild -bb --define "_topdir $(pwd)/dist"  dist/SPECS/*.
-spec
+rpmbuild -bb --define "_topdir $(pwd)/dist"  dist/SPECS/*.spec
 ```
 
 RPM Types
